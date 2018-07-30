@@ -8,7 +8,7 @@ Retrieve and extract data from HTML documents.
     >>> resp = extr.extract(html)
     >>> print resp
 """
-import urlparse
+from urllib import parse
 import importlib
 
 
@@ -19,7 +19,7 @@ MARK_TECHNIQUE = False
 
 
 class Extracted(object):
-    "Contains data extracted from a page."
+    """Contains data extracted from a page."""
 
     def __init__(self, titles=None, descriptions=None, images=None, videos=None, urls=None, feeds=None, **kwargs):
         """
@@ -47,7 +47,7 @@ class Extracted(object):
             >>> import requests
             >>> from extraction import Extractor
             >>> url = "http://lethain.com/"
-            >>> html = requests.get("url).text
+            >>> html = requests.get('url').text
             >>> extracted = Extractor().extract(html)
             >>> canonical_url = extracted.url if extract.url else url
 
@@ -157,7 +157,7 @@ class Extracted(object):
             return None
 
 
-class DictExtractor(object):
+class DictExtractor:
     """
     Extracts title, image and description from an HTML document.
 
@@ -178,7 +178,8 @@ class DictExtractor(object):
     text_types = ["titles", "descriptions"]
 
     def __init__(self, techniques=None, strict_types=False, *args, **kwargs):
-        "Extractor."
+        """Extractor."""
+
         self.strict_types = strict_types
         if techniques:
             self.techniques = techniques
@@ -186,8 +187,7 @@ class DictExtractor(object):
         super(DictExtractor, self).__init__(*args, **kwargs)
 
     def run_technique(self, technique, html):
-        """
-        Run a given technique against the HTML.
+        """Run a given technique against the HTML.
 
         Technique is a string including the full module path
         and class name for the technique, for example::
@@ -196,6 +196,7 @@ class DictExtractor(object):
 
         HTML is a string representing an HTML document.
         """
+
         technique_path_parts = technique.split('.')
         assert len(technique_path_parts) > 1, "technique_path_parts must include a module and a class"
         technique_module_path = ".".join(technique_path_parts[:-1])
@@ -206,25 +207,26 @@ class DictExtractor(object):
         return technique_inst.extract(html)
 
     def cleanup_text(self, value, mark):
-        "Cleanup text values like titles or descriptions."
+        """Cleanup text values like titles or descriptions."""
+
         text = u" ".join(value.strip().split())
         if mark:
             text = u"%s %s" % (mark, text)
         return text
 
     def cleanup_url(self, value_url, source_url, mark):
-        """
-        Transform relative URLs into absolute URLs if possible.
+        """Transform relative URLs into absolute URLs if possible.
 
         If the value_url is already absolute, or we don't know the
         source_url, then return the existing value. If the value_url is
         relative, and we know the source_url, then try to rewrite it.
         """
-        value = urlparse.urlparse(value_url)
+
+        value = parse.urlparse(value_url)
         if value.netloc or not source_url:
             url = value_url
         else:
-            url = urlparse.urljoin(source_url, value_url)
+            url = parse.urljoin(source_url, value_url)
         if url.startswith('//'):
             url = 'http:' + url # MissingSchema fix
         if mark:
@@ -232,8 +234,7 @@ class DictExtractor(object):
         return url
 
     def cleanup(self, results, source_url=None, technique=""):
-        """
-        Allows standardizing extracted contents, at this time:
+        """Allows standardizing extracted contents, at this time:
 
         1. removes multiple whitespaces
         2. rewrite relative URLs as absolute URLs if source_url is specified
@@ -241,6 +242,7 @@ class DictExtractor(object):
         4. marks the technique that produced the result
         5. returns only specified text_types and url_types depending on self.strict_types
         """
+
         cleaned_results = {}
         mark = MARK_TECHNIQUE and u"#" + technique.split('.')[-1]
 
@@ -296,26 +298,31 @@ class Extractor(DictExtractor):
     Subclass of ``DictExtractor`` which wraps results in a
     subclass of ``Extracted`` for greater control.
     """
+
     extracted_class = Extracted
 
     def __init__(self, extracted_class=None, *args, **kwargs):
-        "Initialize Extractor instance."
+        """Initialize Extractor instance."""
+
         super(Extractor, self).__init__(*args, **kwargs)
         if extracted_class:
             self.extracted_class = extracted_class
 
     def extract(self, *args, **kwargs):
-        "Extract contents from an HTML document."
+        """Extract contents from an HTML document."""
+
         extract_dict = super(Extractor, self).extract(*args, **kwargs)
         return self.extracted_class(**extract_dict)
 
 
 class SvvenExtractor(DictExtractor):
-    "Example subclass for Svven news aggregator."
+    """Example subclass for Svven news aggregator."""
+
     url_types = ["images", "urls"]
     text_types = ["titles", "descriptions"]
 
     def __init__(self, *args, **kwargs):
-        "Extractor which defaults to strict_types being true."
+        """Extractor which defaults to strict_types being true."""
+
         kwargs.setdefault('strict_types', True)
         super(SvvenExtractor, self).__init__(*args, **kwargs)

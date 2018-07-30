@@ -13,8 +13,10 @@ parsing articles on my blog at lethain.com. Usage is::
 This is also an example of returning additional metadata,
 in this case it also extracts a date and tags from the page.
 """
+
 from extraction.techniques import Technique
-from bs4 import BeautifulSoup
+from parsel import Selector
+
 
 class LethainComTechnique(Technique):
     """
@@ -33,15 +35,19 @@ class LethainComTechnique(Technique):
     Depending on how many sites you're extracting data from, these techniques are either very
     useful or clinically insane. Perhaps both.
     """
+
     def extract(self, html):
-        "Extract data from lethain.com."
-        soup = BeautifulSoup(html)
-        page_div = soup.find('div', class_='page')
-        text_div = soup.find('div', class_='text')
-        return { 'titles': [page_div.find('h2').string],
-                 'dates': [page_div.find('span', class_='date').string],
-                 'descriptions': [" ".join(text_div.find('p').strings)],
-                 'tags': [x.find('a').string for x in page_div.find_all('span', class_='tag')],
-                 'images': [x.attrs['src'] for x in text_div.find_all('img')],
-                 }
+        """Extract data from lethain.com."""
+
+        selector = Selector(html)
+        page_div = selector.xpath('//div[@class="page"]')
+        text_div = selector.xpath('//div[@class="text"]')
+
+        return {
+            'titles': [page_div.xpath('string(.//h2)').extract_first()],
+            'dates': [page_div.xpath('.//span[@class="date"]/text()').extract_first()],
+            'descriptions': [' '.join(text_div.xpath('string(.//p)').extract())],
+            'tags': page_div.xpath('.//span[@class="tag"]/a/text()').extract(),
+            'images': text_div.xpath('.//img/@src').extract(),
+        }
 

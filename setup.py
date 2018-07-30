@@ -1,4 +1,4 @@
-from distutils.core import setup
+from setuptools import setup
 
 setup(
     name='extraction',
@@ -9,9 +9,7 @@ setup(
     url='http://pypi.python.org/pypi/extraction/',
     license='LICENSE.txt',
     description='Extract basic info from HTML webpages.',
-    long_description=open('README.rst').read(),
     install_requires=[
-        "beautifulsoup4 >= 4.1.3",
-        "html5lib",
-        ],
+        "parsel==1.5.0"
+    ],
 )
